@@ -3510,7 +3510,7 @@ export default function App() {
               </div>
             </div>
 
-            <button
+            {/* <button
               type="button"
               onClick={() => {
                 downloadViteProjectZip();
@@ -3520,7 +3520,7 @@ export default function App() {
               className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-700 hover:to-indigo-700 px-3 py-2 rounded-xl shadow-xs transition-all shrink-0"
             >
               <span>Download Vite Project (.zip)</span>
-            </button>
+            </button> */}
 
             <button
               type="button"
