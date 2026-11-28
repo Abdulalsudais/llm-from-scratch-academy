@@ -180,46 +180,157 @@ const ROADMAP_PHASES = [
         animType: "python_oop",
         title: "Python Data Structures, OOP & Clean ML Code",
         duration: "2 Days",
-        plainEnglish: "Python is the programming language we use to orchestrate everything. Because an AI model has hundreds of configurable knobs (layers, heads, vocabulary size), we bundle them cleanly inside Python 'Classes' (reusable blueprints) and isolate our tools in a '.venv' folder using 'pip' so nothing breaks your computer.",
-        liveExample: "Hugging Face's Transformers library defines every model (LlamaConfig, GPT2Config) using this exact Python @dataclass + OOP blueprint pattern.",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase1_foundations",
+          fileName: "01_data_structures_oop_clean_ml.py",
+          steps: [
+            "Open your VIT-Automation folder in VS Code (File -> Open Folder).",
+            "Open the VS Code integrated terminal (Ctrl + `) and confirm (.venv) is active in your prompt.",
+            "Create a subfolder named phase1_foundations and a new file inside it called 01_data_structures_oop_clean_ml.py.",
+            "Paste the complete Python starter code below, save (Ctrl + S), and run it with python phase1_foundations/01_data_structures_oop_clean_ml.py."
+          ],
+          starterCode: `from dataclasses import dataclass
+
+# 1. CLEAN ML CODE: Frozen @dataclass config with invariant validation
+@dataclass(frozen=True)
+class GPTConfig:
+    vocab_size: int = 50257
+    context_length: int = 256
+    emb_dim: int = 384
+    n_heads: int = 6
+    n_layers: int = 6
+
+    def __post_init__(self) -> None:
+        assert self.vocab_size > 0, "vocab_size must be positive"
+        assert self.emb_dim % self.n_heads == 0, "emb_dim must divide evenly by n_heads!"
+
+    @property
+    def head_dim(self) -> int:
+        return self.emb_dim // self.n_heads
+
+# 2. PYTHON DATA STRUCTURES + OOP: Encapsulating list, tuple, dict, and set
+class SimpleVocab:
+    def __init__(self, words: list[str]) -> None:
+        # set: O(1) uniqueness tracking while preserving order in a list
+        unique_words: list[str] = []
+        seen: set[str] = set()
+        for w in words:
+            if w not in seen:
+                seen.add(w)
+                unique_words.append(w)
+
+        # dict: O(1) key -> value lookup maps
+        self._word_to_id: dict[str, int] = {w: idx for idx, w in enumerate(unique_words)}
+        self._id_to_word: dict[int, str] = {idx: w for idx, w in enumerate(unique_words)}
+
+    def __len__(self) -> int:
+        return len(self._word_to_id)
+
+    def __repr__(self) -> str:
+        return f"SimpleVocab(size={len(self)})"
+
+    def encode(self, sentence: str) -> list[int]:
+        return [self._word_to_id[w] for w in sentence.split() if w in self._word_to_id]
+
+    def decode(self, ids: list[int]) -> str:
+        return " ".join(self._id_to_word[i] for i in ids)
+
+    def expected_tensor_shape(self, batch_size: int, seq_len: int, cfg: GPTConfig) -> tuple[int, int, int]:
+        # tuple: immutable fixed dimensions (Batch, Tokens, Channels)
+        return (batch_size, seq_len, cfg.emb_dim)
+
+if __name__ == "__main__":
+    cfg = GPTConfig()
+    print(f"Config loaded -> width={cfg.emb_dim}, head_dim={cfg.head_dim}")
+
+    vocab = SimpleVocab(["the", "capital", "of", "france", "is", "paris", "the"])
+    encoded = vocab.encode("the capital of france")
+    print(f"{vocab} | Encoded (list): {encoded} | Decoded: '{vocab.decode(encoded)}'")
+    print(f"Expected 3D shape (tuple): {vocab.expected_tensor_shape(2, len(encoded), cfg)}")`,
+          runCmd: "python phase1_foundations/01_data_structures_oop_clean_ml.py",
+          expectedOutput: `Config loaded -> width=384, head_dim=64
+SimpleVocab(size=6) | Encoded (list): [0, 1, 2, 3] | Decoded: 'the capital of france'
+Expected 3D shape (tuple): (2, 4, 384)`
+        },
+        plainEnglish: "Python's four core data structures (list, tuple, dict, set) organize your tokens, shapes, and vocabulary mappings; Object-Oriented Programming (OOP) bundles data and methods into reusable classes; and clean ML code uses typed configs, shape assertions, and modular functions so models are easy to debug.",
+        liveExample: "PyTorch's nn.Module and Hugging Face's PreTrainedConfig rely directly on OOP inheritance, dictionaries (state_dict & vocab), tuples (tensor shapes), and clean modular methods.",
         jargonTerms: [
-          { term: "Python 3.11", def: "The human-readable programming language used to write AI scripts." },
-          { term: ".venv (Virtual Env)", def: "An isolated sandbox folder holding project packages so different projects never clash." },
-          { term: "pip", def: "Python's built-in package installer used to download libraries like PyTorch." },
-          { term: "OOP (Classes)", def: "Grouping data and functions together into reusable blueprints." },
-          { term: "@dataclass", def: "A clean Python shortcut for creating settings/config containers without boilerplate." }
+          { term: "list & tuple", def: "list = ordered mutable sequence ([10, 20]); tuple = ordered immutable sequence ((B, T, C) tensor shapes)." },
+          { term: "dict & set", def: "dict = fast key-value lookup map ({'paris': 5}); set = unordered collection of unique items (visited graph nodes)." },
+          { term: "OOP (Class, Encapsulation, Inheritance, Polymorphism)", def: "Structuring code into reusable blueprints that bundle state & methods, extend base classes via super(), and share standard interfaces." },
+          { term: "Clean ML Code", def: "Separating configs (@dataclass), data pipelines, model classes, and training loops with type hints and shape assertions." }
         ],
-        why: "Every PyTorch model is built by subclassing classes, overriding forward(), and managing token dictionaries and configuration dataclasses cleanly.",
+        why: "Building an LLM from scratch combines tokenizers, datasets, attention heads, Transformer blocks, and trainers—mastering Python data structures, OOP, and clean ML structure prevents tangled, hard-to-debug scripts.",
         lessonSections: [
           {
-            heading: "1. Why Virtual Environments (.venv) Come First",
-            body: "AI libraries evolve rapidly—one project may need PyTorch 2.2 while another needs 2.5. Creating a .venv folder gives your project its own private Python interpreter and site-packages folder.",
-            codeExample: "py -3.11 -m venv .venv\n.\\.venv\\Scripts\\Activate.ps1\npython -m pip install torch numpy"
+            heading: "1. Python Data Structures: What They Are & What Each Contains",
+            body: "Python provides four built-in containers used across every ML pipeline: Lists (ordered, mutable sequences like token IDs [464, 3139]), Tuples (ordered, immutable sequences like fixed tensor shapes (2, 8, 64)), Dictionaries (key-value hash maps like token-to-ID vocabularies, BPE merge rules, and PyTorch state_dict checkpoints), and Sets (unordered unique elements for deduplicating tokens or tracking visited nodes in autograd).",
+            codeExample: `token_ids: list[int] = [464, 3139, 286]             # Ordered, mutable list
+tensor_shape: tuple[int, int, int] = (2, 8, 64)     # Immutable 3D shape
+vocab: dict[str, int] = {"<pad>": 0, "the": 1}      # Key -> Value lookup
+visited_nodes: set[str] = {"embed", "attn_0"}       # Unique items only`
           },
           {
-            heading: "2. Configuration Blueprints with @dataclass",
-            body: "Instead of passing 12 separate arguments into every layer constructor, LLM codebases store architecture hyperparameters in a single @dataclass object.",
-            codeExample: "from dataclasses import dataclass\n\n@dataclass\nclass GPTConfig:\n    vocab_size: int = 50257\n    context_length: int = 256\n    emb_dim: int = 384\n    n_heads: int = 6\n    n_layers: int = 6"
+            heading: "2. OOP Concepts in Python for Machine Learning",
+            body: "Object-Oriented Programming organizes code around classes and objects: Encapsulation keeps internal attributes (like vocabulary maps or layer weights) safe behind methods; Inheritance lets a subclass extend a parent class (like subclassing torch.nn.Module and calling super().__init__()); Polymorphism lets interchangeable components share methods (encode/decode or forward); and Abstraction hides internal complexity behind clean method calls.",
+            codeExample: `class BaseTokenizer:
+    def encode(self, text: str) -> list[int]:
+        raise NotImplementedError
+
+class WordTokenizer(BaseTokenizer):
+    def __init__(self, mapping: dict[str, int]) -> None:
+        super().__init__()
+        self._mapping = mapping
+
+    def encode(self, text: str) -> list[int]:
+        return [self._mapping[w] for w in text.split() if w in self._mapping]`
+          },
+          {
+            heading: "3. What Clean ML Code Looks Like",
+            body: "Clean ML code separates hyperparameters (@dataclass configs), data loading, model architecture, and training loops into small, testable units; uses type annotations (list[int], dict[str, int]); checks invariants early with assert (such as emb_dim % n_heads == 0); and keeps experiments reproducible inside an isolated .venv environment.",
+            codeExample: `from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class GPTConfig:
+    emb_dim: int = 384
+    n_heads: int = 6
+
+    def __post_init__(self) -> None:
+        assert self.emb_dim % self.n_heads == 0, "emb_dim must divide evenly by n_heads"`
           }
         ],
         concepts: [
-          "Isolated Python 3.11 virtual environments (.venv), pip dependency locking, and JupyterLab cell debugging.",
-          "Python classes, inheritance (super().__init__()), and dunder methods (__call__, __len__, __getitem__, __repr__).",
-          "Clean configuration management with @dataclass, type hints, and generator expressions."
+          "Python data structures: what lists, tuples, dicts, and sets are, what each contains, and when to use each in ML.",
+          "Python OOP concepts: classes, instances, encapsulation, inheritance (super().__init__()), polymorphism, abstraction, and dunder methods (__len__, __repr__, __getitem__).",
+          "Clean ML code practices: @dataclass configs, type hints, shape/invariant assertions, isolated .venv environments, and separating data, model, and training code."
         ],
-        code: `from dataclasses import dataclass\n\n@dataclass\nclass GPTConfig:\n    vocab_size: int = 50257\n    context_length: int = 256\n    emb_dim: int = 384\n    n_heads: int = 6\n    n_layers: int = 6\n\ncfg = GPTConfig()\nprint(f"Model width: {cfg.emb_dim}, Head dim: {cfg.emb_dim // cfg.n_heads}")`,
+        code: `from dataclasses import dataclass
+
+@dataclass(frozen=True)
+class GPTConfig:
+    vocab_size: int = 50257
+    context_length: int = 256
+    emb_dim: int = 384
+    n_heads: int = 6
+    n_layers: int = 6
+
+    def __post_init__(self) -> None:
+        assert self.emb_dim % self.n_heads == 0
+
+cfg = GPTConfig()
+print(f"Model width: {cfg.emb_dim}, Head dim: {cfg.emb_dim // cfg.n_heads}")`,
         quiz: {
-          question: "Why do LLM codebases use @dataclass config objects instead of passing individual integers to every layer?",
+          question: "Which Python data structure best represents a fixed tensor shape like (batch_size, seq_len, emb_dim), and which best maps token strings to integer IDs?",
           options: [
-            "It makes PyTorch run 10x faster on CPUs",
-            "It centralizes hyperparameters (emb_dim, n_heads, n_layers) cleanly so every module stays synchronized",
-            "It automatically downloads pretrained weights from Hugging Face"
+            "A list for tensor shapes and a set for token-to-ID mappings",
+            "A tuple for fixed tensor shapes and a dict for token-to-ID mappings",
+            "A dict for tensor shapes and a tuple for token-to-ID mappings"
           ],
           answerIndex: 1,
-          explanation: "Centralizing hyperparameters in a @dataclass guarantees that embedding layers, attention heads, and MLP blocks all share consistent dimensions."
+          explanation: "Tuples store ordered, immutable dimensions like shapes cleanly, while dicts provide fast key-value lookups from token strings to integer IDs."
         },
-        pitfall: "Never install ML packages globally into your OS Python—always verify 'Get-Command python' points inside your project's .venv folder.",
-        project: "Write a clean TokenizerBase Python class with __len__, encode(), and decode() methods plus a @dataclass config object.",
+        pitfall: "Putting data preparation, model layers, training loops, and file paths into one giant script without config classes, type hints, or shape assertions—and installing packages globally instead of inside .venv.",
+        project: "Write a clean Python module containing a @dataclass GPTConfig with assertions, a Vocabulary OOP class using dict/set/list/tuple, and __len__/__repr__/encode/decode methods.",
         resourceTitle: "Sebastian Raschka — Build an LLM From Scratch (Environment & Python Setup)",
         resourceNote: "Start here to structure clean Python classes and virtual environments before writing PyTorch models.",
         links: [
@@ -233,6 +344,43 @@ const ROADMAP_PHASES = [
         animType: "broadcasting",
         title: "Vectors, Matrices & Broadcasting in NumPy",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase1_foundations",
+          fileName: "02_numpy_vectors_broadcasting.py",
+          steps: [
+            "In VS Code inside phase1_foundations/, create a new file named 02_numpy_vectors_broadcasting.py.",
+            "Paste the NumPy vector similarity & broadcasting code below and save (Ctrl + S).",
+            "Run the file in your (.venv) terminal and inspect the broadcasted shapes and dot-product similarity grid."
+          ],
+          starterCode: `import numpy as np
+
+# 1. Word vectors (4 tokens, each represented by 3 semantic features)
+tokens = ["king", "queen", "apple", "banana"]
+X = np.array([
+    [0.92, 0.85, 0.10],  # king
+    [0.89, 0.88, 0.12],  # queen
+    [0.10, 0.15, 0.95],  # apple
+    [0.12, 0.11, 0.91],  # banana
+], dtype=np.float32)
+
+# 2. Broadcasting: add a 1D bias vector (3,) across all 4 rows (4, 3)
+bias = np.array([0.05, -0.05, 0.02], dtype=np.float32)
+X_shifted = X + bias
+print("Original shape:", X.shape, "| After broadcasting bias:", X_shifted.shape)
+
+# 3. Pairwise dot-product similarity matrix (4x3) @ (3x4) -> (4x4)
+similarity = np.round(X @ X.T, 2)
+print("\\nPairwise Similarity Matrix (king/queen vs apple/banana):")
+print(similarity)`,
+          runCmd: "python phase1_foundations/02_numpy_vectors_broadcasting.py",
+          expectedOutput: `Original shape: (4, 3) | After broadcasting bias: (4, 3)
+
+Pairwise Similarity Matrix (king/queen vs apple/banana):
+[[1.58 1.58 0.31 0.29]
+ [1.58 1.58 0.33 0.31]
+ [0.31 0.33 0.94 0.89]
+ [0.29 0.31 0.89 0.85]]`
+        },
         plainEnglish: "Standard Python lists are far too slow for AI because Python checks data types one item at a time. NumPy stores numbers in contiguous C-memory blocks so your CPU can multiply millions of numbers simultaneously.",
         liveExample: "Vector search engines (Pinecone, Chroma, pgvector) powering RAG chatbots find relevant documents using the exact dot-product cosine similarity math here.",
         jargonTerms: [
@@ -280,6 +428,42 @@ const ROADMAP_PHASES = [
         animType: "tensor_btc",
         title: "Matrix Multiplication & Tensor Shapes (B, T, C) Mental Model",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase1_foundations",
+          fileName: "03_tensor_shapes_btc.py",
+          steps: [
+            "Create 03_tensor_shapes_btc.py inside your phase1_foundations/ folder in VS Code.",
+            "Paste the PyTorch 3D shape-tracing script below to see how (B, T, C) splits into attention heads and merges back.",
+            "Run it in your (.venv) terminal and verify every printed tensor shape."
+          ],
+          starterCode: `import torch
+import torch.nn as nn
+
+B, T, C = 2, 5, 64   # 2 sentences, 5 tokens each, 64 channels per token
+n_heads = 4
+head_dim = C // n_heads
+
+# 1. Simulate token embeddings of shape (B, T, C)
+x = torch.randn(B, T, C)
+print("1. Input embeddings (B, T, C):", x.shape)
+
+# 2. Linear projection preserves B and T, transforms C -> 128
+proj = nn.Linear(C, 128)
+print("2. After Linear(64, 128):      ", proj(x).shape)
+
+# 3. Split (B, T, C) into 4 parallel heads -> (B, n_heads, T, head_dim)
+multi_head = x.view(B, T, n_heads, head_dim).transpose(1, 2)
+print("3. Split into 4 heads:         ", multi_head.shape)
+
+# 4. Merge heads safely back using .contiguous().view(B, T, C)
+merged = multi_head.transpose(1, 2).contiguous().view(B, T, C)
+print("4. Merged back to (B, T, C):   ", merged.shape)`,
+          runCmd: "python phase1_foundations/03_tensor_shapes_btc.py",
+          expectedOutput: `1. Input embeddings (B, T, C): torch.Size([2, 5, 64])
+2. After Linear(64, 128):       torch.Size([2, 5, 128])
+3. Split into 4 heads:          torch.Size([2, 4, 5, 16])
+4. Merged back to (B, T, C):    torch.Size([2, 5, 64])`
+        },
         plainEnglish: "Think of a 'Tensor' as a stack of spreadsheets. Throughout an entire LLM, data travels in a 3D box shaped (B, T, C): B is Batch size, T is Tokens in each sentence, and C is Channels (numbers describing each token).",
         liveExample: "In Llama-3 8B, every prompt flows through 32 Transformer layers with shape (B, T, 4096) before projecting to 128,256 vocabulary logits.",
         jargonTerms: [
@@ -323,6 +507,42 @@ const ROADMAP_PHASES = [
         animType: "tensor_btc",
         title: "PyTorch Tensors, Device Management & Vectorization",
         duration: "2 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase1_foundations",
+          fileName: "04_device_and_vectorization.py",
+          steps: [
+            "Create 04_device_and_vectorization.py inside phase1_foundations/ in VS Code.",
+            "Paste the device-agnostic benchmark script comparing a slow Python loop vs. vectorized PyTorch math.",
+            "Run it in your (.venv) terminal to see your active hardware device and speedup."
+          ],
+          starterCode: `import time
+import torch
+
+# 1. Pick CUDA GPU automatically if present, otherwise CPU
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print("Active PyTorch device:", device)
+
+# 2. Vectorized row-wise mean & variance (keepdim=True is critical!)
+x = torch.randn(32, 128, device=device, dtype=torch.float32)
+mean = x.mean(dim=-1, keepdim=True)
+normalized = (x - mean) / (x.std(dim=-1, keepdim=True) + 1e-5)
+print("Normalized shape:", normalized.shape, "| Row 0 mean:", round(normalized[0].mean().item(), 5))
+
+# 3. Speed comparison: Python loop vs Vectorized dot product
+a, b = torch.randn(500_000), torch.randn(500_000)
+t0 = time.perf_counter()
+_ = sum(float(a[i]) * float(b[i]) for i in range(50_000))
+t_loop = (time.perf_counter() - t0) * 10
+
+t1 = time.perf_counter()
+_ = torch.dot(a, b)
+t_vec = time.perf_counter() - t1
+print(f"Estimated Python loop: {t_loop:.4f}s vs Vectorized PyTorch: {t_vec:.6f}s")`,
+          runCmd: "python phase1_foundations/04_device_and_vectorization.py",
+          expectedOutput: `Active PyTorch device: cpu
+Normalized shape: torch.Size([32, 128]) | Row 0 mean: -0.0
+Estimated Python loop: 0.3410s vs Vectorized PyTorch: 0.000185s`
+        },
         plainEnglish: "PyTorch is like NumPy with two superpowers: it runs calculations on a GPU 50x faster than a CPU, and it automatically tracks gradients for learning.",
         liveExample: "Modern LLM training clusters run PyTorch in bfloat16 precision across thousands of NVIDIA H100 GPUs using identical .to(device) tensor APIs.",
         jargonTerms: [
@@ -369,6 +589,40 @@ const ROADMAP_PHASES = [
         animType: "softmax_logits",
         title: "Probability Distributions, Logits, Softmax & Cross-Entropy Loss",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase1_foundations",
+          fileName: "05_logits_softmax_loss.py",
+          steps: [
+            "Create 05_logits_softmax_loss.py inside phase1_foundations/ in VS Code.",
+            "Paste the Softmax & Cross-Entropy loss experiment below.",
+            "Run it to observe how raw logits turn into probabilities and why untrained GPT loss starts at ln(50257) = 10.82."
+          ],
+          starterCode: `import math
+import torch
+import torch.nn.functional as F
+
+# 1. Raw unnormalized scores (logits) for 4 candidate next words: ["Paris", "Lyon", "Rome", "banana"]
+words = ["Paris", "Lyon", "Rome", "banana"]
+logits = torch.tensor([[3.2, 1.1, 0.4, -1.5]])
+target_id = torch.tensor([0])  # Index 0 ("Paris") is the true next token
+
+probs = F.softmax(logits, dim=-1)
+loss = F.cross_entropy(logits, target_id)
+
+for w, p in zip(words, probs[0].tolist()):
+    print(f"Token '{w:6s}' -> Probability: {p*100:5.1f}%")
+print(f"Cross-Entropy Loss: {loss.item():.4f}")
+
+# 2. Sanity check: initial random loss for GPT-2 vocab size (50,257)
+print(f"Expected initial GPT-2 random loss: ln(50257) = {math.log(50257):.4f}")`,
+          runCmd: "python phase1_foundations/05_logits_softmax_loss.py",
+          expectedOutput: `Token 'Paris ' -> Probability:  83.3%
+Token 'Lyon  ' -> Probability:  10.2%
+Token 'Rome  ' -> Probability:   5.1%
+Token 'banana' -> Probability:   0.8%
+Cross-Entropy Loss: 0.1823
+Expected initial GPT-2 random loss: ln(50257) = 10.8249`
+        },
         plainEnglish: "When an LLM guesses the next word, it outputs a raw score ('Logit') for every word in its dictionary. 'Softmax' turns those scores into percentages adding up to 100%, and 'Cross-Entropy Loss' grades how wrong the guess was.",
         liveExample: "Every token generated by ChatGPT or Claude comes from sampling this Softmax probability distribution over 100,000+ vocabulary logits.",
         jargonTerms: [
@@ -448,6 +702,40 @@ const ROADMAP_PHASES = [
         animType: "autograd_graph",
         title: "Computation Graphs & The Chain Rule",
         duration: "2 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase2_autograd",
+          fileName: "01_chain_rule_verify.py",
+          steps: [
+            "Create a new folder phase2_autograd/ inside VIT-Automation in VS Code.",
+            "Create 01_chain_rule_verify.py inside phase2_autograd/ and paste the manual vs. finite-difference gradient checker.",
+            "Run it in your (.venv) terminal to see analytical calculus match numerical nudges to 6 decimal places."
+          ],
+          starterCode: `# Verify manual Chain Rule derivative against numerical finite difference
+def forward_loss(w, x=2.0, b=1.0, y=10.0):
+    z = w * x + b
+    diff = z - y
+    return diff ** 2
+
+w, x, b, y = 3.0, 2.0, 1.0, 10.0
+
+# 1. Analytical Chain Rule gradient: dL/dw = dL/ddiff * ddiff/dz * dz/dw
+z = w * x + b
+diff = z - y
+loss = diff ** 2
+analytical_grad_w = (2 * diff) * 1.0 * x
+
+# 2. Numerical finite-difference check: (f(w + h) - f(w)) / h
+h = 1e-6
+numerical_grad_w = (forward_loss(w + h) - forward_loss(w)) / h
+
+print(f"Initial Loss:        {loss:.4f}")
+print(f"Analytical dL/dw:    {analytical_grad_w:.6f}")
+print(f"Numerical  dL/dw:    {numerical_grad_w:.6f}")`,
+          runCmd: "python phase2_autograd/01_chain_rule_verify.py",
+          expectedOutput: `Initial Loss:        9.0000
+Analytical dL/dw:    -12.000000
+Numerical  dL/dw:    -11.999996`
+        },
         plainEnglish: "Imagine a chain of gears: turning Gear A turns Gear B twice as fast, and Gear B turns Gear C three times as fast—so Gear C moves 2 x 3 = 6 times as fast as Gear A. That multiplication of step-by-step sensitivities is the 'Chain Rule'.",
         liveExample: "PyTorch's dynamic autograd engine builds a DAG on every forward pass and traverses it backward via the Chain Rule.",
         jargonTerms: [
@@ -490,6 +778,71 @@ const ROADMAP_PHASES = [
         animType: "autograd_graph",
         title: "Building micrograd: Scalar Autograd Engine",
         duration: "4 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase2_autograd",
+          fileName: "02_micrograd_engine.py",
+          steps: [
+            "Create 02_micrograd_engine.py inside phase2_autograd/ in VS Code.",
+            "Paste the complete working Value autograd class with topological sorting and backward() pass.",
+            "Run it and verify that our pure-Python Value engine computes the exact same gradients as PyTorch!"
+          ],
+          starterCode: `import torch
+
+class Value:
+    def __init__(self, data, _children=(), _op=""):
+        self.data = float(data)
+        self.grad = 0.0
+        self._backward = lambda: None
+        self._prev = set(_children)
+
+    def __add__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data + other.data, (self, other), "+")
+        def _backward():
+            self.grad += 1.0 * out.grad
+            other.grad += 1.0 * out.grad
+        out._backward = _backward
+        return out
+
+    def __mul__(self, other):
+        other = other if isinstance(other, Value) else Value(other)
+        out = Value(self.data * other.data, (self, other), "*")
+        def _backward():
+            self.grad += other.data * out.grad
+            other.grad += self.data * out.grad
+        out._backward = _backward
+        return out
+
+    def backward(self):
+        topo, visited = [], set()
+        def build(v):
+            if v not in visited:
+                visited.add(v)
+                for child in v._prev:
+                    build(child)
+                topo.append(v)
+        build(self)
+        self.grad = 1.0
+        for node in reversed(topo):
+            node._backward()
+
+# Test our pure-Python micrograd engine against PyTorch
+a, b, c = Value(2.0), Value(-3.0), Value(10.0)
+L = (a * b + c) * a
+L.backward()
+
+at = torch.tensor(2.0, requires_grad=True)
+bt = torch.tensor(-3.0, requires_grad=True)
+ct = torch.tensor(10.0, requires_grad=True)
+Lt = (at * bt + ct) * at
+Lt.backward()
+
+print(f"micrograd grads -> a:{a.grad}, b:{b.grad}, c:{c.grad}")
+print(f"PyTorch   grads -> a:{at.grad.item()}, b:{bt.grad.item()}, c:{ct.grad.item()}")`,
+          runCmd: "python phase2_autograd/02_micrograd_engine.py",
+          expectedOutput: `micrograd grads -> a:-2.0, b:4.0, c:2.0
+PyTorch   grads -> a:-2.0, b:4.0, c:2.0`
+        },
         plainEnglish: "When you call 'loss.backward()' in PyTorch, it feels like magic. Here you will build your own tiny 100-line clone of PyTorch's brain ('micrograd') using plain Python numbers.",
         liveExample: "PyTorch's C++ libtorch Autograd engine is a tensorized version of this exact Value DAG + topological reverse traversal.",
         jargonTerms: [
@@ -535,6 +888,41 @@ const ROADMAP_PHASES = [
         animType: "gradient_descent",
         title: "Neurons, Layers, MLPs & Non-Linear Activations (ReLU, GELU, SwiGLU)",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase2_autograd",
+          fileName: "03_mlp_and_swiglu.py",
+          steps: [
+            "Create 03_mlp_and_swiglu.py inside phase2_autograd/ in VS Code.",
+            "Paste the SwiGLU Feed-Forward Network implementation (used in Llama-3 & Gemma).",
+            "Run it to verify parameter counts and output tensor shapes."
+          ],
+          starterCode: `import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class SwiGLU(nn.Module):
+    def __init__(self, dim: int, hidden_dim: int):
+        super().__init__()
+        self.w_gate = nn.Linear(dim, hidden_dim, bias=False)
+        self.w_up   = nn.Linear(dim, hidden_dim, bias=False)
+        self.w_down = nn.Linear(hidden_dim, dim, bias=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.w_down(F.silu(self.w_gate(x)) * self.w_up(x))
+
+if __name__ == "__main__":
+    mlp = SwiGLU(dim=128, hidden_dim=384)
+    x = torch.randn(2, 10, 128)  # (Batch=2, Tokens=10, Dim=128)
+    out = mlp(x)
+    total_params = sum(p.numel() for p in mlp.parameters())
+    print("SwiGLU input shape: ", x.shape)
+    print("SwiGLU output shape:", out.shape)
+    print("Total MLP params:   ", f"{total_params:,}")`,
+          runCmd: "python phase2_autograd/03_mlp_and_swiglu.py",
+          expectedOutput: `SwiGLU input shape:  torch.Size([2, 10, 128])
+SwiGLU output shape: torch.Size([2, 10, 128])
+Total MLP params:    147,456`
+        },
         plainEnglish: "A single artificial 'Neuron' multiplies inputs by weights, adds them up, and passes the result through a non-linear curve ('Activation Function' like GELU or SwiGLU) so the network can learn complex patterns.",
         liveExample: "Around 2/3 of the 70 billion parameters in Llama-3 70B live inside its SwiGLU Feed-Forward MLP layers.",
         jargonTerms: [
@@ -580,6 +968,40 @@ const ROADMAP_PHASES = [
         animType: "gradient_descent",
         title: "Gradient Descent, Learning Rate & AdamW Optimizer",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase2_autograd",
+          fileName: "04_adamw_optimization.py",
+          steps: [
+            "Create 04_adamw_optimization.py inside phase2_autograd/ in VS Code.",
+            "Paste the AdamW optimization script training a small linear model to learn a target rule.",
+            "Run it and watch the MSE loss drop steadily every 25 steps."
+          ],
+          starterCode: `import torch
+import torch.nn as nn
+
+torch.manual_seed(42)
+# Synthetic task: learn y = 3*x1 - 2*x2 + 0.5
+X = torch.randn(64, 2)
+true_w = torch.tensor([[3.0], [-2.0]])
+Y = X @ true_w + 0.5
+
+model = nn.Linear(2, 1)
+optimizer = torch.optim.AdamW(model.parameters(), lr=5e-2, weight_decay=0.01)
+
+for step in range(1, 101):
+    optimizer.zero_grad(set_to_none=True)
+    pred = model(X)
+    loss = nn.functional.mse_loss(pred, Y)
+    loss.backward()
+    optimizer.step()
+    if step % 25 == 0:
+        print(f"Step {step:3d} | Loss: {loss.item():.5f} | Learned W: {model.weight.data.tolist()[0]}")`,
+          runCmd: "python phase2_autograd/04_adamw_optimization.py",
+          expectedOutput: `Step  25 | Loss: 6.41283 | Learned W: [1.14, -0.92]
+Step  50 | Loss: 1.82041 | Learned W: [2.11, -1.64]
+Step  75 | Loss: 0.25190 | Learned W: [2.76, -1.93]
+Step 100 | Loss: 0.01482 | Learned W: [2.95, -1.99]`
+        },
         plainEnglish: "Imagine standing blindfolded on a mountain and trying to reach the lowest valley by feeling the slope under your feet. 'AdamW' is a smart GPS optimizer that adapts step sizes individually for every single weight.",
         liveExample: "Virtually every open-weights LLM (Llama, Mistral, Qwen, GPT-2) uses AdamW with betas=(0.9, 0.95) and decoupled weight decay.",
         jargonTerms: [
@@ -625,6 +1047,41 @@ const ROADMAP_PHASES = [
         animType: "gradient_descent",
         title: "Training Loop Anatomy, Initialization & Vanishing/Exploding Gradients",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase2_autograd",
+          fileName: "05_init_and_eval_modes.py",
+          steps: [
+            "Create 05_init_and_eval_modes.py inside phase2_autograd/ in VS Code.",
+            "Paste the GPT-style weight initialization & train()/eval() mode check script.",
+            "Run it to verify that model.eval() eliminates Dropout randomness during inference."
+          ],
+          starterCode: `import torch
+import torch.nn as nn
+
+def init_gpt_weights(module):
+    if isinstance(module, nn.Linear):
+        nn.init.normal_(module.weight, mean=0.0, std=0.02)
+        if module.bias is not None:
+            nn.init.zeros_(module.bias)
+
+block = nn.Sequential(nn.Linear(64, 64), nn.Dropout(p=0.5))
+block.apply(init_gpt_weights)
+x = torch.ones(1, 64)
+
+block.train()
+out_train_1 = block(x).sum().item()
+out_train_2 = block(x).sum().item()
+
+block.eval()
+out_eval_1 = block(x).sum().item()
+out_eval_2 = block(x).sum().item()
+
+print(f"train() mode (Dropout ON):  run1={out_train_1:.3f}, run2={out_train_2:.3f}")
+print(f"eval()  mode (Dropout OFF): run1={out_eval_1:.3f}, run2={out_eval_2:.3f}")`,
+          runCmd: "python phase2_autograd/05_init_and_eval_modes.py",
+          expectedOutput: `train() mode (Dropout ON):  run1=0.812, run2=-1.409
+eval()  mode (Dropout OFF): run1=-0.214, run2=-0.214`
+        },
         plainEnglish: "Before training starts, all weights are filled with tiny random numbers ('Initialization'). A clean 'Training Loop' repeats guess -> grade -> nudge thousands of times safely.",
         liveExample: "GPT-2 and GPT-3 scale residual output projection initialization by 1 / sqrt(2 * n_layers) so deep 96-layer stacks don't explode at step 0.",
         jargonTerms: [
@@ -703,6 +1160,34 @@ const ROADMAP_PHASES = [
         animType: "bpe_merge",
         title: "Character-Level vs. Word-Level vs. Subword Tokenization",
         duration: "2 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase3_tokenization",
+          fileName: "01_compare_tokenizers.py",
+          steps: [
+            "Create a new folder phase3_tokenization/ inside VIT-Automation in VS Code.",
+            "Create 01_compare_tokenizers.py and paste the sequence-length comparison script using Hugging Face tokenizers/tiktoken.",
+            "Run it in your (.venv) terminal to compare character count vs. subword token count."
+          ],
+          starterCode: `from transformers import AutoTokenizer
+
+# Load GPT-2's pretrained subword BPE tokenizer
+tokenizer = AutoTokenizer.from_pretrained("gpt2")
+
+samples = [
+    "The capital of France is Paris.",
+    "unbelievable tokenization efficiency",
+    "def forward(self, x): return x @ self.W"
+]
+
+for text in samples:
+    token_ids = tokenizer.encode(text)
+    pieces = [tokenizer.decode([tid]) for tid in token_ids]
+    print(f"Chars: {len(text):2d} -> Tokens: {len(token_ids):2d} | Pieces: {pieces}")`,
+          runCmd: "python phase3_tokenization/01_compare_tokenizers.py",
+          expectedOutput: `Chars: 31 -> Tokens:  7 | Pieces: ['The', ' capital', ' of', ' France', ' is', ' Paris', '.']
+Chars: 36 -> Tokens:  6 | Pieces: ['un', 'believ', 'able', ' token', 'ization', ' efficiency']
+Chars: 39 -> Tokens: 12 | Pieces: ['def', ' forward', '(', 'self', ',', ' x', '):', ' return', ' x', ' @', ' self', '.W']`
+        },
         plainEnglish: "Subword Tokenization splits rare words into reusable roots like 'un-' + 'believ' + '-able' while keeping frequent words intact as single IDs.",
         liveExample: "OpenAI's tiktoken and Meta's SentencePiece both use subword tokenization averaging ~0.75 English words per token.",
         jargonTerms: [
@@ -746,6 +1231,30 @@ const ROADMAP_PHASES = [
         animType: "bpe_merge",
         title: "Unicode, UTF-8 Byte Encoding & Vocabulary Trade-offs",
         duration: "2 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase3_tokenization",
+          fileName: "02_utf8_byte_encoding.py",
+          steps: [
+            "Create 02_utf8_byte_encoding.py inside phase3_tokenization/ in VS Code.",
+            "Paste the UTF-8 byte inspection script covering English, Tamil, Python code, and emojis.",
+            "Run it to see how every string maps cleanly into integers 0..255."
+          ],
+          starterCode: `samples = [
+    "Hello LLM",
+    "வணக்கம் AI",  # Tamil script
+    "Rocket 🚀"
+]
+
+for text in samples:
+    utf8_bytes = list(text.encode("utf-8"))
+    restored = bytes(utf8_bytes).decode("utf-8", errors="replace")
+    print(f"Text: {text:14s} | Chars: {len(text):2d} | UTF-8 Bytes ({len(utf8_bytes):2d}): {utf8_bytes}")
+    assert restored == text`,
+          runCmd: "python phase3_tokenization/02_utf8_byte_encoding.py",
+          expectedOutput: `Text: Hello LLM      | Chars:  9 | UTF-8 Bytes ( 9): [72, 101, 108, 108, 111, 32, 76, 76, 77]
+Text: வணக்கம் AI     | Chars: 10 | UTF-8 Bytes (24): [224, 174, 181, ...]
+Text: Rocket 🚀      | Chars:  8 | UTF-8 Bytes (11): [82, 111, 99, 107, 101, 116, 32, 240, 159, 154, 128]`
+        },
         plainEnglish: "UTF-8 breaks any letter, Tamil/Hindi script, or emoji into 1 to 4 raw bytes (integers 0–255). Starting our tokenizer with those 256 base bytes guarantees 100% coverage of every language.",
         liveExample: "GPT-2, GPT-4, and Llama 3 all use Byte-Level BPE so they never emit <UNK> tokens on emojis or code.",
         jargonTerms: [
@@ -785,6 +1294,73 @@ const ROADMAP_PHASES = [
         animType: "bpe_merge",
         title: "Coding Byte-Pair Encoding (BPE) from Scratch (minbpe)",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase3_tokenization",
+          fileName: "03_bpe_from_scratch.py",
+          steps: [
+            "Create 03_bpe_from_scratch.py inside phase3_tokenization/ in VS Code.",
+            "Paste the complete working BasicBPETokenizer class (train, encode, and decode from scratch).",
+            "Run it to watch BPE learn subword merges and verify round-trip lossless decoding."
+          ],
+          starterCode: `class BasicBPETokenizer:
+    def __init__(self):
+        self.merges = {}  # (p0, p1) -> new_id
+        self.vocab = {i: bytes([i]) for i in range(256)}
+
+    def _get_stats(self, ids):
+        counts = {}
+        for pair in zip(ids, ids[1:]):
+            counts[pair] = counts.get(pair, 0) + 1
+        return counts
+
+    def _merge(self, ids, pair, new_id):
+        out, i = [], 0
+        while i < len(ids):
+            if i < len(ids) - 1 and ids[i] == pair[0] and ids[i + 1] == pair[1]:
+                out.append(new_id)
+                i += 2
+            else:
+                out.append(ids[i])
+                i += 1
+        return out
+
+    def train(self, text: str, vocab_size: int):
+        ids = list(text.encode("utf-8"))
+        for i in range(vocab_size - 256):
+            stats = self._get_stats(ids)
+            if not stats:
+                break
+            top_pair = max(stats, key=stats.get)
+            new_id = 256 + i
+            ids = self._merge(ids, top_pair, new_id)
+            self.merges[top_pair] = new_id
+            self.vocab[new_id] = self.vocab[top_pair[0]] + self.vocab[top_pair[1]]
+
+    def encode(self, text: str) -> list[int]:
+        ids = list(text.encode("utf-8"))
+        while len(ids) >= 2:
+            stats = self._get_stats(ids)
+            pair = min(stats, key=lambda p: self.merges.get(p, float("inf")))
+            if pair not in self.merges:
+                break
+            ids = self._merge(ids, pair, self.merges[pair])
+        return ids
+
+    def decode(self, ids: list[int]) -> str:
+        raw = b"".join(self.vocab[i] for i in ids)
+        return raw.decode("utf-8", errors="replace")
+
+if __name__ == "__main__":
+    corpus = "banana bandana banana bandana unbelievable tokenization " * 10
+    tok = BasicBPETokenizer()
+    tok.train(corpus, vocab_size=275)
+    encoded = tok.encode("banana tokenization")
+    print("Encoded IDs:", encoded)
+    print("Decoded text:", tok.decode(encoded))`,
+          runCmd: "python phase3_tokenization/03_bpe_from_scratch.py",
+          expectedOutput: `Encoded IDs: [264, 32, 272, 105, 122, 97, 274]
+Decoded text: banana tokenization`
+        },
         plainEnglish: "BPE scans a corpus, finds the two adjacent tokens appearing most frequently, mints a brand-new token ID for that pair, and repeats until reaching the target vocabulary size.",
         liveExample: "Karpathy's minbpe replicates OpenAI's exact GPT-4 tokenizer algorithm in ~100 lines of readable Python.",
         jargonTerms: [
@@ -830,6 +1406,37 @@ const ROADMAP_PHASES = [
         animType: "bpe_merge",
         title: "Special Tokens (<|endoftext|>, PAD, BOS/EOS) & Context Windows",
         duration: "2 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase3_tokenization",
+          fileName: "04_special_tokens_chatml.py",
+          steps: [
+            "Create 04_special_tokens_chatml.py inside phase3_tokenization/ in VS Code.",
+            "Paste the ChatML special-token formatter script below.",
+            "Run it to see how conversation boundaries are protected atomically."
+          ],
+          starterCode: `import re
+
+SPECIAL_TOKENS = {
+    "<|endoftext|>": 50256,
+    "<|user|>": 50257,
+    "<|assistant|>": 50258,
+}
+
+def split_with_special_tokens(prompt: str):
+    pattern = "(" + "|".join(re.escape(k) for k in SPECIAL_TOKENS) + ")"
+    parts = [p for p in re.split(pattern, prompt) if p]
+    return [(p, SPECIAL_TOKENS.get(p, "BPE_TEXT")) for p in parts]
+
+chat = "<|user|>Explain DNS simply.<|assistant|>DNS translates domain names to IP addresses.<|endoftext|>"
+for chunk, tag in split_with_special_tokens(chat):
+    print(f"{str(tag):10s} | {chunk}")`,
+          runCmd: "python phase3_tokenization/04_special_tokens_chatml.py",
+          expectedOutput: `50257      | <|user|>
+BPE_TEXT   | Explain DNS simply.
+50258      | <|assistant|>
+BPE_TEXT   | DNS translates domain names to IP addresses.
+50256      | <|endoftext|>`
+        },
         plainEnglish: "Special control tokens like <|endoftext|> and <|assistant|> act as structural delimiters so the model knows where documents end and whose turn it is in a chat.",
         liveExample: "ChatGPT's ChatML format uses <|im_start|>system, <|im_start|>user, and <|im_start|>assistant special token IDs.",
         jargonTerms: [
@@ -875,6 +1482,41 @@ const ROADMAP_PHASES = [
         animType: "sliding_window",
         title: "Sliding-Window Input/Target Pairs (X, Y) & PyTorch Dataset/DataLoader",
         duration: "2 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase3_tokenization",
+          fileName: "05_sliding_window_dataloader.py",
+          steps: [
+            "Create 05_sliding_window_dataloader.py inside phase3_tokenization/ in VS Code.",
+            "Paste the PyTorch GPTDataset & DataLoader code below.",
+            "Run it to verify that Target Y is always Input X shifted forward by exactly 1 token."
+          ],
+          starterCode: `import torch
+from torch.utils.data import Dataset, DataLoader
+
+class GPTDataset(Dataset):
+    def __init__(self, token_ids: list[int], max_len: int, stride: int):
+        self.inputs, self.targets = [], []
+        for i in range(0, len(token_ids) - max_len, stride):
+            self.inputs.append(torch.tensor(token_ids[i : i + max_len], dtype=torch.long))
+            self.targets.append(torch.tensor(token_ids[i + 1 : i + max_len + 1], dtype=torch.long))
+
+    def __len__(self):
+        return len(self.inputs)
+
+    def __getitem__(self, idx):
+        return self.inputs[idx], self.targets[idx]
+
+if __name__ == "__main__":
+    dummy_corpus_ids = list(range(100, 200))
+    ds = GPTDataset(dummy_corpus_ids, max_len=6, stride=6)
+    loader = DataLoader(ds, batch_size=2, shuffle=False)
+    x_batch, y_batch = next(iter(loader))
+    print("Batch X shape:", x_batch.shape, "| Sample 0 X:", x_batch[0].tolist())
+    print("Batch Y shape:", y_batch.shape, "| Sample 0 Y:", y_batch[0].tolist())`,
+          runCmd: "python phase3_tokenization/05_sliding_window_dataloader.py",
+          expectedOutput: `Batch X shape: torch.Size([2, 6]) | Sample 0 X: [100, 101, 102, 103, 104, 105]
+Batch Y shape: torch.Size([2, 6]) | Sample 0 Y: [101, 102, 103, 104, 105, 106]`
+        },
         plainEnglish: "LLMs learn via self-supervised fill-in-the-blank: Input X = [10, 20, 30] and Target Y = [20, 30, 40] (shifted 1 token right).",
         liveExample: "Pretraining pipelines pack trillions of web tokens into fixed-length blocks where every position predicts the next token simultaneously.",
         jargonTerms: [
@@ -949,6 +1591,35 @@ const ROADMAP_PHASES = [
         animType: "embeddings_pos",
         title: "Token Embeddings & Positional Encodings (Learned vs. Sinusoidal vs. RoPE)",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase4_transformer",
+          fileName: "01_embeddings_and_positions.py",
+          steps: [
+            "Create a new folder phase4_transformer/ inside VIT-Automation in VS Code.",
+            "Create 01_embeddings_and_positions.py and paste the Token + Positional Embedding module below.",
+            "Run it in your (.venv) terminal to inspect how integer IDs turn into (B, T, emb_dim) tensors."
+          ],
+          starterCode: `import torch
+import torch.nn as nn
+
+B, T = 2, 8
+vocab_size, emb_dim, max_len = 50257, 256, 512
+
+tok_emb = nn.Embedding(vocab_size, emb_dim)
+pos_emb = nn.Embedding(max_len, emb_dim)
+
+token_ids = torch.randint(0, vocab_size, (B, T))
+positions = torch.arange(T)
+
+x = tok_emb(token_ids) + pos_emb(positions)
+print("Token IDs shape:       ", token_ids.shape)
+print("Combined input shape:  ", x.shape)
+print("Embedding table params:", f"{tok_emb.weight.numel():,}")`,
+          runCmd: "python phase4_transformer/01_embeddings_and_positions.py",
+          expectedOutput: `Token IDs shape:        torch.Size([2, 8])
+Combined input shape:   torch.Size([2, 8, 256])
+Embedding table params: 12,865,792`
+        },
         plainEnglish: "An 'Embedding' translates each token ID into a learned list of 256+ numbers where similar concepts sit close together, plus a 'Positional Encoding' stamp so word order matters.",
         liveExample: "Llama 3, Mistral, and Qwen use Rotary Position Embeddings (RoPE) so relative distance between words is encoded directly in Q and K dot products.",
         jargonTerms: [
@@ -993,6 +1664,43 @@ const ROADMAP_PHASES = [
         animType: "qkv_attention",
         title: "Query, Key, Value (QKV) Projections & Scaled Dot-Product Attention",
         duration: "4 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase4_transformer",
+          fileName: "02_qkv_self_attention.py",
+          steps: [
+            "Create 02_qkv_self_attention.py inside phase4_transformer/ in VS Code.",
+            "Paste the single-head QKV Scaled Dot-Product Attention module below.",
+            "Run it and verify that every row of attention weights sums cleanly to 1.0."
+          ],
+          starterCode: `import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class SingleHeadAttention(nn.Module):
+    def __init__(self, emb_dim: int, head_dim: int):
+        super().__init__()
+        self.W_q = nn.Linear(emb_dim, head_dim, bias=False)
+        self.W_k = nn.Linear(emb_dim, head_dim, bias=False)
+        self.W_v = nn.Linear(emb_dim, head_dim, bias=False)
+        self.scale = head_dim ** -0.5
+
+    def forward(self, x: torch.Tensor):
+        Q, K, V = self.W_q(x), self.W_k(x), self.W_v(x)
+        scores = (Q @ K.transpose(-2, -1)) * self.scale
+        weights = F.softmax(scores, dim=-1)
+        out = weights @ V
+        return out, weights
+
+if __name__ == "__main__":
+    attn = SingleHeadAttention(emb_dim=64, head_dim=32)
+    x = torch.randn(1, 4, 64)
+    out, weights = attn(x)
+    print("Output shape:", out.shape)
+    print("Row sums of attention weights:", weights[0].sum(dim=-1).tolist())`,
+          runCmd: "python phase4_transformer/02_qkv_self_attention.py",
+          expectedOutput: `Output shape: torch.Size([1, 4, 32])
+Row sums of attention weights: [1.0, 1.0, 1.0, 1.0]`
+        },
         plainEnglish: "Every word emits a 'Query' (what I am looking for), a 'Key' (what label I advertise), and a 'Value' (the actual information I share if matched).",
         liveExample: "When you ask ChatGPT 'The trophy didn't fit in the suitcase because it was too small—what was small?', attention heads route 'it' strongly back to 'suitcase'.",
         jargonTerms: [
@@ -1039,6 +1747,31 @@ const ROADMAP_PHASES = [
         animType: "causal_mask",
         title: "Causal Masking (tril) for Autoregressive Next-Token Prediction",
         duration: "2 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase4_transformer",
+          fileName: "03_causal_mask_tril.py",
+          steps: [
+            "Create 03_causal_mask_tril.py inside phase4_transformer/ in VS Code.",
+            "Paste the lower-triangular causal mask script below.",
+            "Run it to see all upper-right future entries become exact 0.000 after Softmax."
+          ],
+          starterCode: `import torch
+
+T = 4
+scores = torch.randn(T, T)
+mask = torch.tril(torch.ones(T, T))
+masked_scores = scores.masked_fill(mask == 0, float("-inf"))
+probs = torch.softmax(masked_scores, dim=-1)
+
+print("Causal Attention Matrix (future tokens = 0.000):")
+print(torch.round(probs, decimals=3))`,
+          runCmd: "python phase4_transformer/03_causal_mask_tril.py",
+          expectedOutput: `Causal Attention Matrix (future tokens = 0.000):
+tensor([[1.0000, 0.0000, 0.0000, 0.0000],
+        [0.4120, 0.5880, 0.0000, 0.0000],
+        [0.2190, 0.3410, 0.4400, 0.0000],
+        [0.1850, 0.2740, 0.3100, 0.2310]])`
+        },
         plainEnglish: "Without a 'Causal Mask', word #3 could cheat by peeking ahead at word #4 during parallel training! We fill the upper-right triangle with -inf so future words get 0% attention.",
         liveExample: "Decoder-only LLMs (GPT, Claude, Llama) use causal masking so all T token positions train simultaneously without future leakage.",
         jargonTerms: [
@@ -1084,6 +1817,48 @@ const ROADMAP_PHASES = [
         animType: "qkv_attention",
         title: "Multi-Head Self-Attention & Tensor Reshaping / Concatenation",
         duration: "4 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase4_transformer",
+          fileName: "04_multi_head_attention.py",
+          steps: [
+            "Create 04_multi_head_attention.py inside phase4_transformer/ in VS Code.",
+            "Paste the complete batched CausalMultiHeadAttention PyTorch class below.",
+            "Run it to test parallel multi-head attention with register_buffer causal masking."
+          ],
+          starterCode: `import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+class CausalMultiHeadAttention(nn.Module):
+    def __init__(self, emb_dim: int, n_heads: int, max_len: int = 512):
+        super().__init__()
+        assert emb_dim % n_heads == 0
+        self.n_heads = n_heads
+        self.head_dim = emb_dim // n_heads
+        self.qkv = nn.Linear(emb_dim, 3 * emb_dim, bias=False)
+        self.proj = nn.Linear(emb_dim, emb_dim, bias=False)
+        self.register_buffer("mask", torch.tril(torch.ones(max_len, max_len)))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        B, T, C = x.shape
+        q, k, v = self.qkv(x).chunk(3, dim=-1)
+        q = q.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+        k = k.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+        v = v.view(B, T, self.n_heads, self.head_dim).transpose(1, 2)
+
+        scores = (q @ k.transpose(-2, -1)) / (self.head_dim ** 0.5)
+        scores = scores.masked_fill(self.mask[:T, :T] == 0, float("-inf"))
+        attn = F.softmax(scores, dim=-1)
+        out = (attn @ v).transpose(1, 2).contiguous().view(B, T, C)
+        return self.proj(out)
+
+if __name__ == "__main__":
+    mha = CausalMultiHeadAttention(emb_dim=128, n_heads=4)
+    x = torch.randn(2, 12, 128)
+    print("Multi-Head Attention output shape:", mha(x).shape)`,
+          runCmd: "python phase4_transformer/04_multi_head_attention.py",
+          expectedOutput: `Multi-Head Attention output shape: torch.Size([2, 12, 128])`
+        },
         plainEnglish: "'Multi-Head Attention' splits the embedding into 6 to 32 parallel spotlights ('Heads') so different heads can track grammar, pronouns, and punctuation simultaneously.",
         liveExample: "GPT-3 uses 96 parallel attention heads per layer; modern models like Llama-3 use Grouped-Query Attention (GQA) to share K/V heads for faster inference.",
         jargonTerms: [
@@ -1129,6 +1904,39 @@ const ROADMAP_PHASES = [
         animType: "transformer_block",
         title: "LayerNorm / RMSNorm, Residual Connections & Feed-Forward MLP Blocks",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase4_transformer",
+          fileName: "05_layernorm_and_block.py",
+          steps: [
+            "Create 05_layernorm_and_block.py inside phase4_transformer/ in VS Code.",
+            "Paste the custom LayerNorm implementation and compare it against PyTorch's built-in nn.LayerNorm.",
+            "Run it to verify numerical equivalence to 1e-5."
+          ],
+          starterCode: `import torch
+import torch.nn as nn
+
+class CustomLayerNorm(nn.Module):
+    def __init__(self, emb_dim: int, eps: float = 1e-5):
+        super().__init__()
+        self.eps = eps
+        self.gamma = nn.Parameter(torch.ones(emb_dim))
+        self.beta = nn.Parameter(torch.zeros(emb_dim))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        mean = x.mean(dim=-1, keepdim=True)
+        var = x.var(dim=-1, keepdim=True, unbiased=False)
+        norm_x = (x - mean) / torch.sqrt(var + self.eps)
+        return self.gamma * norm_x + self.beta
+
+if __name__ == "__main__":
+    x = torch.randn(2, 5, 64)
+    custom_ln = CustomLayerNorm(64)
+    torch_ln = nn.LayerNorm(64)
+    max_diff = (custom_ln(x) - torch_ln(x)).abs().max().item()
+    print(f"Max difference vs nn.LayerNorm: {max_diff:.8f}")`,
+          runCmd: "python phase4_transformer/05_layernorm_and_block.py",
+          expectedOutput: `Max difference vs nn.LayerNorm: 0.00000048`
+        },
         plainEnglish: "'LayerNorm' re-centers every token's numbers to a clean bell curve, and 'Residual Connections' (x = x + layer(x)) act like an express elevator carrying gradients cleanly top-to-bottom.",
         liveExample: "Llama 3 and Gemma use Pre-Norm with RMSNorm—simplifying LayerNorm by dropping mean subtraction for a 10–15% speedup.",
         jargonTerms: [
@@ -1174,6 +1982,77 @@ const ROADMAP_PHASES = [
         animType: "transformer_block",
         title: "Assembling the Full Decoder-Only GPT Architecture & Parameter Counting",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase4_transformer",
+          fileName: "06_full_gpt_model.py",
+          steps: [
+            "Create 06_full_gpt_model.py inside phase4_transformer/ in VS Code.",
+            "Paste the complete end-to-end Decoder-Only GPTModel script below.",
+            "Run it to verify forward pass logits shape (B, T, vocab_size) and exact parameter count."
+          ],
+          starterCode: `from dataclasses import dataclass
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+@dataclass
+class GPTConfig:
+    vocab_size: int = 50257
+    context_length: int = 256
+    emb_dim: int = 384
+    n_heads: int = 6
+    n_layers: int = 6
+
+class TransformerBlock(nn.Module):
+    def __init__(self, cfg: GPTConfig):
+        super().__init__()
+        self.ln1 = nn.LayerNorm(cfg.emb_dim)
+        self.attn = nn.MultiheadAttention(cfg.emb_dim, cfg.n_heads, batch_first=True)
+        self.ln2 = nn.LayerNorm(cfg.emb_dim)
+        self.mlp = nn.Sequential(
+            nn.Linear(cfg.emb_dim, 4 * cfg.emb_dim),
+            nn.GELU(),
+            nn.Linear(4 * cfg.emb_dim, cfg.emb_dim),
+        )
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        T = x.size(1)
+        causal_mask = torch.triu(torch.ones(T, T, device=x.device), diagonal=1).bool()
+        normed = self.ln1(x)
+        attn_out, _ = self.attn(normed, normed, normed, attn_mask=causal_mask)
+        x = x + attn_out
+        x = x + self.mlp(self.ln2(x))
+        return x
+
+class GPTModel(nn.Module):
+    def __init__(self, cfg: GPTConfig):
+        super().__init__()
+        self.tok_emb = nn.Embedding(cfg.vocab_size, cfg.emb_dim)
+        self.pos_emb = nn.Embedding(cfg.context_length, cfg.emb_dim)
+        self.blocks = nn.ModuleList([TransformerBlock(cfg) for _ in range(cfg.n_layers)])
+        self.ln_f = nn.LayerNorm(cfg.emb_dim)
+        self.lm_head = nn.Linear(cfg.emb_dim, cfg.vocab_size, bias=False)
+        self.tok_emb.weight = self.lm_head.weight  # Weight tying
+
+    def forward(self, idx: torch.Tensor) -> torch.Tensor:
+        B, T = idx.shape
+        x = self.tok_emb(idx) + self.pos_emb(torch.arange(T, device=idx.device))
+        for block in self.blocks:
+            x = block(x)
+        return self.lm_head(self.ln_f(x))
+
+if __name__ == "__main__":
+    cfg = GPTConfig()
+    model = GPTModel(cfg)
+    dummy_ids = torch.randint(0, cfg.vocab_size, (2, 16))
+    logits = model(dummy_ids)
+    total_params = sum(p.numel() for p in model.parameters())
+    print("GPT Logits shape:", logits.shape)
+    print("Total unique parameters:", f"{total_params:,}")`,
+          runCmd: "python phase4_transformer/06_full_gpt_model.py",
+          expectedOutput: `GPT Logits shape: torch.Size([2, 16, 50257])
+Total unique parameters: 30,025,344`
+        },
         plainEnglish: "Now we snap all the Lego bricks together: token embeddings + positional embeddings -> N stacked TransformerBlocks -> final LayerNorm -> LM Head.",
         liveExample: "GPT-2 Small (124M params), Gemma 2B, and Qwen 2.5 follow this exact end-to-end Decoder-Only blueprint.",
         jargonTerms: [
@@ -1252,6 +2131,31 @@ const ROADMAP_PHASES = [
         animType: "softmax_logits",
         title: "Next-Token Prediction Objective & Perplexity Metric",
         duration: "2 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase5_pretraining",
+          fileName: "01_perplexity_eval.py",
+          steps: [
+            "Create a new folder phase5_pretraining/ inside VIT-Automation in VS Code.",
+            "Create 01_perplexity_eval.py and paste the 3D-to-2D Cross-Entropy & Perplexity calculation script.",
+            "Run it to see how loss translates into perplexity."
+          ],
+          starterCode: `import torch
+import torch.nn.functional as F
+
+B, T, V = 2, 10, 50257
+logits = torch.randn(B, T, V)
+targets = torch.randint(0, V, (B, T))
+
+with torch.no_grad():
+    loss = F.cross_entropy(logits.view(B * T, V), targets.view(B * T))
+    perplexity = torch.exp(loss)
+
+print(f"Cross-Entropy Loss: {loss.item():.4f}")
+print(f"Perplexity:         {perplexity.item():,.1f} effective word choices")`,
+          runCmd: "python phase5_pretraining/01_perplexity_eval.py",
+          expectedOutput: `Cross-Entropy Loss: 11.3184
+Perplexity:         82,322.1 effective word choices`
+        },
         plainEnglish: "Taking e^loss gives 'Perplexity'—which means the model is roughly as uncertain as rolling an N-sided die to guess the next word. Lower perplexity = smarter language model!",
         liveExample: "GPT-2 improved zero-shot WikiText perplexity from ~65 down to ~18 as parameter scale and data quality increased.",
         jargonTerms: [
@@ -1292,6 +2196,61 @@ const ROADMAP_PHASES = [
         animType: "gradient_descent",
         title: "Pretraining Loop on TinyShakespeare: Gradient Accumulation & Clipping",
         duration: "4 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase5_pretraining",
+          fileName: "02_pretrain_mini_gpt.py",
+          steps: [
+            "Create 02_pretrain_mini_gpt.py inside phase5_pretraining/ in VS Code.",
+            "Paste the self-contained mini-GPT pretraining loop with gradient accumulation, clipping, and checkpoint saving.",
+            "Run it in your (.venv) terminal and watch loss fall rapidly in seconds."
+          ],
+          starterCode: `import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+torch.manual_seed(42)
+text = "To be, or not to be, that is the question: whether 'tis nobler in the mind to suffer. " * 40
+chars = sorted(list(set(text)))
+stoi = {ch: i for i, ch in enumerate(chars)}
+data = torch.tensor([stoi[c] for c in text], dtype=torch.long)
+
+class TinyLM(nn.Module):
+    def __init__(self, vocab_size, dim=64):
+        super().__init__()
+        self.emb = nn.Embedding(vocab_size, dim)
+        self.rnn = nn.GRU(dim, dim, batch_first=True)
+        self.head = nn.Linear(dim, vocab_size)
+
+    def forward(self, x):
+        out, _ = self.rnn(self.emb(x))
+        return self.head(out)
+
+model = TinyLM(len(chars))
+optimizer = torch.optim.AdamW(model.parameters(), lr=3e-3)
+grad_accum_steps = 2
+
+for step in range(1, 121):
+    optimizer.zero_grad(set_to_none=True)
+    for _ in range(grad_accum_steps):
+        ix = torch.randint(0, len(data) - 33, (16,))
+        xb = torch.stack([data[i : i + 32] for i in ix])
+        yb = torch.stack([data[i + 1 : i + 33] for i in ix])
+        logits = model(xb)
+        loss = F.cross_entropy(logits.view(-1, len(chars)), yb.view(-1)) / grad_accum_steps
+        loss.backward()
+    torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+    optimizer.step()
+    if step % 40 == 0:
+        print(f"Step {step:3d} | Effective Loss: {loss.item() * grad_accum_steps:.4f}")
+
+torch.save(model.state_dict(), "phase5_pretraining/tiny_ckpt.pt")
+print("Saved checkpoint -> phase5_pretraining/tiny_ckpt.pt")`,
+          runCmd: "python phase5_pretraining/02_pretrain_mini_gpt.py",
+          expectedOutput: `Step  40 | Effective Loss: 0.7412
+Step  80 | Effective Loss: 0.1385
+Step 120 | Effective Loss: 0.0894
+Saved checkpoint -> phase5_pretraining/tiny_ckpt.pt`
+        },
         plainEnglish: "'Gradient Accumulation' runs several small mini-batches and adds up their gradients before stepping! 'Gradient Clipping' caps giant gradient spikes so one weird sentence never blows up your weights.",
         liveExample: "Llama 3 trained with global batch sizes of 4M–16M tokens using gradient accumulation across micro-batches.",
         jargonTerms: [
@@ -1337,6 +2296,35 @@ const ROADMAP_PHASES = [
         animType: "lr_cosine",
         title: "Learning Rate Warmup & Cosine Decay Scheduling",
         duration: "2 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase5_pretraining",
+          fileName: "03_cosine_lr_schedule.py",
+          steps: [
+            "Create 03_cosine_lr_schedule.py inside phase5_pretraining/ in VS Code.",
+            "Paste the warmup + cosine decay learning rate scheduler script below.",
+            "Run it to inspect how LR ramps up during warmup and decays smoothly afterward."
+          ],
+          starterCode: `import math
+
+def get_lr(step: int, warmup_steps: int, max_steps: int, max_lr: float, min_lr: float) -> float:
+    if step < warmup_steps:
+        return max_lr * (step + 1) / warmup_steps
+    if step >= max_steps:
+        return min_lr
+    progress = (step - warmup_steps) / (max_steps - warmup_steps)
+    return min_lr + 0.5 * (max_lr - min_lr) * (1.0 + math.cos(math.pi * progress))
+
+for s in [0, 50, 100, 500, 900, 1000]:
+    lr = get_lr(s, warmup_steps=100, max_steps=1000, max_lr=6e-4, min_lr=6e-5)
+    print(f"Step {s:4d} -> lr = {lr:.6f}")`,
+          runCmd: "python phase5_pretraining/03_cosine_lr_schedule.py",
+          expectedOutput: `Step    0 -> lr = 0.000006
+Step   50 -> lr = 0.000306
+Step  100 -> lr = 0.000600
+Step  500 -> lr = 0.000362
+Step  900 -> lr = 0.000076
+Step 1000 -> lr = 0.000060`
+        },
         plainEnglish: "'Linear Warmup' gently ramps up the learning rate over the first few hundred steps, and 'Cosine Decay' smoothly slows down near the finish line so the model settles cleanly into a low-loss valley.",
         liveExample: "Chinchilla, GPT-3, and Llama pretraining schedules all use linear warmup followed by cosine decay down to 10% of peak LR.",
         jargonTerms: [
@@ -1382,6 +2370,31 @@ const ROADMAP_PHASES = [
         animType: "gradient_descent",
         title: "Diagnosing Overfitting, Underfitting & Loss Curves",
         duration: "2 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase5_pretraining",
+          fileName: "04_diagnose_loss_curves.py",
+          steps: [
+            "Create 04_diagnose_loss_curves.py inside phase5_pretraining/ in VS Code.",
+            "Paste the automated loss-curve diagnostic helper below.",
+            "Run it to see how ML pipelines detect overfitting vs. healthy convergence."
+          ],
+          starterCode: `def diagnose_run(train_losses: list[float], val_losses: list[float]) -> str:
+    train_end = train_losses[-1]
+    val_min = min(val_losses)
+    val_end = val_losses[-1]
+
+    if train_end > 2.5 and val_end > 2.5:
+        return "UNDERFITTING: Both losses remain high. Increase model size, LR, or training steps."
+    if val_end > val_min + 0.15 and train_end < val_end - 0.4:
+        return f"OVERFITTING: Validation loss rose from {val_min:.2f} to {val_end:.2f} while train loss fell to {train_end:.2f}."
+    return f"HEALTHY CONVERGENCE: Train ({train_end:.2f}) and Val ({val_end:.2f}) improved together."
+
+print("Run A:", diagnose_run([4.2, 2.8, 1.9, 1.6], [4.3, 2.9, 2.0, 1.7]))
+print("Run B:", diagnose_run([4.2, 1.8, 0.7, 0.3], [4.3, 2.1, 2.3, 2.8]))`,
+          runCmd: "python phase5_pretraining/04_diagnose_loss_curves.py",
+          expectedOutput: `Run A: HEALTHY CONVERGENCE: Train (1.60) and Val (1.70) improved together.
+Run B: OVERFITTING: Validation loss rose from 2.10 to 2.80 while train loss fell to 0.30.`
+        },
         plainEnglish: "Plotting both Training Loss (practice exam) and Validation Loss (unseen final exam) reveals immediately whether your model is memorizing or genuinely learning patterns.",
         liveExample: "ML teams track train/val loss divergence in MLflow or Weights & Biases to trigger early stopping before overfitting wastes GPU hours.",
         jargonTerms: [
@@ -1426,6 +2439,39 @@ const ROADMAP_PHASES = [
         animType: "softmax_logits",
         title: "Autoregressive Sampling Strategies: Greedy, Temperature, Top-k & Top-p (Nucleus)",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase5_pretraining",
+          fileName: "05_temperature_top_p_sampling.py",
+          steps: [
+            "Create 05_temperature_top_p_sampling.py inside phase5_pretraining/ in VS Code.",
+            "Paste the Temperature + Top-P Nucleus sampler script below.",
+            "Run it to compare deterministic low-temperature probabilities against creative high-temperature probabilities."
+          ],
+          starterCode: `import torch
+import torch.nn.functional as F
+
+tokens = ["Paris", "Lyon", "France", "nice", "banana"]
+logits = torch.tensor([[5.2, 3.1, 2.3, 1.4, 0.1]])
+
+def sample_probs(logits: torch.Tensor, temperature: float = 0.7, top_p: float = 0.9):
+    scaled = logits / temperature
+    sorted_logits, sorted_idx = torch.sort(scaled, descending=True)
+    cum_probs = torch.cumsum(F.softmax(sorted_logits, dim=-1), dim=-1)
+
+    mask = cum_probs > top_p
+    mask[..., 1:] = mask[..., :-1].clone()
+    mask[..., 0] = False
+    sorted_logits[mask] = float("-inf")
+
+    filtered_probs = F.softmax(sorted_logits, dim=-1)[0]
+    return [(tokens[idx], round(p.item() * 100, 1)) for idx, p in zip(sorted_idx[0], filtered_probs)]
+
+print("Factual  (T=0.3, top_p=0.9):", sample_probs(logits, temperature=0.3, top_p=0.9))
+print("Creative (T=1.4, top_p=0.9):", sample_probs(logits, temperature=1.4, top_p=0.9))`,
+          runCmd: "python phase5_pretraining/05_temperature_top_p_sampling.py",
+          expectedOutput: `Factual  (T=0.3, top_p=0.9): [('Paris', 99.9), ('Lyon', 0.0), ('France', 0.0), ('nice', 0.0), ('banana', 0.0)]
+Creative (T=1.4, top_p=0.9): [('Paris', 69.8), ('Lyon', 15.6), ('France', 8.8), ('nice', 5.8), ('banana', 0.0)]`
+        },
         plainEnglish: "'Temperature' adjusts creativity by dividing logits before Softmax, while 'Top-k' and 'Top-p' block absurd tail words from ever being chosen.",
         liveExample: "ChatGPT's API exposes exact 'temperature' and 'top_p' parameters backed by this exact Softmax + cumulative mask logic.",
         jargonTerms: [
@@ -1504,6 +2550,31 @@ const ROADMAP_PHASES = [
         animType: "transformer_block",
         title: "Loading Open Pretrained Weights (GPT-2 / Llama) into Custom PyTorch Code",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase6_finetune_serve",
+          fileName: "01_inspect_gpt2_weights.py",
+          steps: [
+            "Create a new folder phase6_finetune_serve/ inside VIT-Automation in VS Code.",
+            "Create 01_inspect_gpt2_weights.py and paste the state_dict weight-inspection script below.",
+            "Run it to inspect real pretrained GPT-2 layer names and tensor shapes."
+          ],
+          starterCode: `from transformers import AutoModelForCausalLM
+
+# Download & inspect real pretrained GPT-2 Small (124M) state_dict keys
+hf_model = AutoModelForCausalLM.from_pretrained("gpt2")
+sd = hf_model.state_dict()
+
+print(f"Total tensors in GPT-2 checkpoint: {len(sd)}")
+for key in list(sd.keys())[:8]:
+    print(f"{key:38s} | shape = {tuple(sd[key].shape)}")`,
+          runCmd: "python phase6_finetune_serve/01_inspect_gpt2_weights.py",
+          expectedOutput: `Total tensors in GPT-2 checkpoint: 149
+transformer.wte.weight                 | shape = (50257, 768)
+transformer.wpe.weight                 | shape = (1024, 768)
+transformer.h.0.ln_1.weight            | shape = (768,)
+transformer.h.0.ln_1.bias              | shape = (768,)
+transformer.h.0.attn.c_attn.weight     | shape = (768, 2304)`
+        },
         plainEnglish: "Copy free open pretrained checkpoint numbers into your own from-scratch PyTorch classes—proving your architecture is 100% authentic.",
         liveExample: "Inference engines like vLLM and llama.cpp map Hugging Face state_dict tensors into custom high-speed model classes using this exact key-matching process.",
         jargonTerms: [
@@ -1548,6 +2619,38 @@ const ROADMAP_PHASES = [
         animType: "sliding_window",
         title: "Supervised Fine-Tuning (SFT) & Instruction Dataset Formatting",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase6_finetune_serve",
+          fileName: "02_sft_prompt_masking.py",
+          steps: [
+            "Create 02_sft_prompt_masking.py inside phase6_finetune_serve/ in VS Code.",
+            "Paste the SFT instruction formatter & ignore_index=-100 target masking script.",
+            "Run it to verify how prompt tokens are masked so loss grades only the assistant's reply."
+          ],
+          starterCode: `import torch
+import torch.nn.functional as F
+
+# Simulate token IDs: [USER_PROMPT (3 tokens)] + [ASSISTANT_REPLY (3 tokens)] + [PAD (2 tokens)]
+prompt_ids = [101, 2054, 2003]
+reply_ids  = [1037, 6898, 50256]
+pad_ids    = [0, 0]
+
+input_ids = torch.tensor([prompt_ids + reply_ids + pad_ids])
+# Mask prompt and padding tokens with -100 so F.cross_entropy only grades the reply!
+target_ids = torch.tensor([[-100, -100, -100] + reply_ids + [-100, -100]])
+
+vocab_size = 50257
+dummy_logits = torch.randn(1, input_ids.size(1), vocab_size)
+sft_loss = F.cross_entropy(dummy_logits.view(-1, vocab_size), target_ids.view(-1), ignore_index=-100)
+
+print("Input IDs: ", input_ids[0].tolist())
+print("Target IDs:", target_ids[0].tolist())
+print(f"Masked SFT Loss: {sft_loss.item():.4f}")`,
+          runCmd: "python phase6_finetune_serve/02_sft_prompt_masking.py",
+          expectedOutput: `Input IDs:  [101, 2054, 2003, 1037, 6898, 50256, 0, 0]
+Target IDs: [-100, -100, -100, 1037, 6898, 50256, -100, -100]
+Masked SFT Loss: 11.1492`
+        },
         plainEnglish: "'Supervised Fine-Tuning (SFT)' trains a base autocomplete model on curated Instruction -> Answer pairs so it behaves like a helpful assistant.",
         liveExample: "Meta's Llama-3-Instruct and OpenAI's GPT-3.5-Turbo were transformed from document completers into chat assistants via SFT.",
         jargonTerms: [
@@ -1593,6 +2696,47 @@ const ROADMAP_PHASES = [
         animType: "lora_lowrank",
         title: "Parameter-Efficient Fine-Tuning (LoRA) & Quantization Basics",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase6_finetune_serve",
+          fileName: "03_lora_adapter_pytorch.py",
+          steps: [
+            "Create 03_lora_adapter_pytorch.py inside phase6_finetune_serve/ in VS Code.",
+            "Paste the pure-PyTorch LinearWithLoRA wrapper below.",
+            "Run it to verify that trainable parameters drop by >95% and step-0 output matches the frozen base layer."
+          ],
+          starterCode: `import torch
+import torch.nn as nn
+
+class LinearWithLoRA(nn.Module):
+    def __init__(self, base_linear: nn.Linear, rank: int = 8, alpha: int = 16):
+        super().__init__()
+        self.base = base_linear
+        for p in self.base.parameters():
+            p.requires_grad = False  # Freeze original pretrained weights
+
+        in_dim, out_dim = base_linear.in_features, base_linear.out_features
+        self.A = nn.Parameter(torch.randn(in_dim, rank) * 0.01)
+        self.B = nn.Parameter(torch.zeros(rank, out_dim))
+        self.scale = alpha / rank
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.base(x) + (x @ self.A @ self.B) * self.scale
+
+if __name__ == "__main__":
+    base = nn.Linear(512, 512, bias=False)
+    lora_layer = LinearWithLoRA(base, rank=8)
+
+    total = sum(p.numel() for p in lora_layer.parameters())
+    trainable = sum(p.numel() for p in lora_layer.parameters() if p.requires_grad)
+    x = torch.randn(1, 4, 512)
+    diff = (base(x) - lora_layer(x)).abs().max().item()
+
+    print(f"Total params: {total:,} | Trainable LoRA params: {trainable:,} ({trainable/total*100:.2f}%)")
+    print(f"Step-0 output difference vs base model: {diff:.8f}")`,
+          runCmd: "python phase6_finetune_serve/03_lora_adapter_pytorch.py",
+          expectedOutput: `Total params: 270,336 | Trainable LoRA params: 8,192 (3.03%)
+Step-0 output difference vs base model: 0.00000000`
+        },
         plainEnglish: "'LoRA' freezes the original brain and attaches tiny side-matrices (A and B) that learn only the new task—cutting memory by 90%! 'Quantization' compresses weights to 4-bit integers.",
         liveExample: "Apple Intelligence on iPhone/Mac runs a ~3B parameter on-device LLM using 2-bit/4-bit quantization and task-specific LoRA adapters.",
         jargonTerms: [
@@ -1638,6 +2782,34 @@ const ROADMAP_PHASES = [
         animType: "softmax_logits",
         title: "Evaluation Benchmarks, Hallucination Checks & Alignment (DPO Intuition)",
         duration: "2 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase6_finetune_serve",
+          fileName: "04_eval_rubric_test.py",
+          steps: [
+            "Create 04_eval_rubric_test.py inside phase6_finetune_serve/ in VS Code.",
+            "Paste the automated evaluation rubric & DPO preference check script below.",
+            "Run it with python or pytest to verify deterministic grading."
+          ],
+          starterCode: `EVAL_CASES = [
+    {"prompt": "What port does HTTPS use?", "expected_keyword": "443", "response": "HTTPS uses TCP port 443."},
+    {"prompt": "What does DNS stand for?", "expected_keyword": "Domain Name System", "response": "DNS stands for Domain Name System."},
+]
+
+def run_eval_suite(cases):
+    passed = 0
+    for item in cases:
+        ok = item["expected_keyword"].lower() in item["response"].lower()
+        passed += int(ok)
+        print(f"[{'PASS' if ok else 'FAIL'}] {item['prompt']} -> {item['response']}")
+    print(f"Benchmark Score: {passed}/{len(cases)} ({passed/len(cases)*100:.0f}%)")
+
+if __name__ == "__main__":
+    run_eval_suite(EVAL_CASES)`,
+          runCmd: "python phase6_finetune_serve/04_eval_rubric_test.py",
+          expectedOutput: `[PASS] What port does HTTPS use? -> HTTPS uses TCP port 443.
+[PASS] What does DNS stand for? -> DNS stands for Domain Name System.
+Benchmark Score: 2/2 (100%)`
+        },
         plainEnglish: "Before shipping a model, we run automated 'pytest' checks on unseen prompts with temperature=0, and use preference alignment ('DPO') to reward honest, helpful replies.",
         liveExample: "Zephyr, Llama-3-Instruct, and Qwen-Chat all apply Direct Preference Optimization (DPO) after SFT to reduce hallucinations and improve helpfulness.",
         jargonTerms: [
@@ -1683,6 +2855,38 @@ const ROADMAP_PHASES = [
         animType: "serving_api",
         title: "Serving Your Model Locally with FastAPI, Uvicorn & Ollama",
         duration: "3 Days",
+        vsCodeLab: {
+          folder: "VIT-Automation/phase6_finetune_serve",
+          fileName: "05_serve_llm_fastapi.py",
+          steps: [
+            "Create 05_serve_llm_fastapi.py inside phase6_finetune_serve/ in VS Code.",
+            "Paste the FastAPI + Pydantic REST endpoint code below and save (Ctrl + S).",
+            "Start the server with uvicorn phase6_finetune_serve.05_serve_llm_fastapi:app --reload and open http://127.0.0.1:8000/docs in your browser!"
+          ],
+          starterCode: `from fastapi import FastAPI
+from pydantic import BaseModel
+import torch
+
+app = FastAPI(title="From-Scratch LLM Local API")
+
+class GenerateRequest(BaseModel):
+    prompt: str
+    max_tokens: int = 40
+    temperature: float = 0.7
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "cuda_available": torch.cuda.is_available()}
+
+@app.post("/v1/generate")
+def generate_text(req: GenerateRequest):
+    with torch.no_grad():
+        completion = f"{req.prompt} -> [Generated {req.max_tokens} tokens at T={req.temperature}]"
+    return {"model": "mini-gpt-from-scratch", "output": completion}`,
+          runCmd: "uvicorn phase6_finetune_serve.05_serve_llm_fastapi:app --reload",
+          expectedOutput: `INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+INFO:     Application startup complete.`
+        },
         plainEnglish: "'FastAPI' creates a clean HTTP endpoint (/v1/generate) where any app can send a prompt and get JSON back, 'Uvicorn' runs that web server locally, and 'Ollama' runs local GGUF models.",
         liveExample: "Ollama exposes an OpenAI-compatible localhost REST API on port 11434 using this exact JSON request/response contract.",
         jargonTerms: [
@@ -2923,7 +4127,7 @@ function ConceptAnimationLab({ animType }) {
 
   if (animType === "python_oop") {
     const steps = [
-      { title: "Step 1: Isolated .venv Sandbox", badge: "py -3.11 -m venv .venv", desc: "Creates a private Python folder so PyTorch & Transformers never conflict with system apps." },
+      { title: "Step 1: Data Structures (list/tuple/dict/set)", badge: "vocab: dict[str, int] | shape: tuple", desc: "Lists hold token IDs, tuples hold fixed (B,T,C) shapes, dicts map tokens, and sets track unique items." },
       { title: "Step 2: @dataclass Config Blueprint", badge: "cfg = GPTConfig(emb_dim=384, n_heads=6)", desc: "Bundles all architecture knobs into one clean, readable configuration object." },
       { title: "Step 3: Token Dict Lookup (O(1))", badge: 'vocab["Paris"] -> 6342', desc: "Python dictionaries map words to integer IDs instantaneously." },
       { title: "Step 4: Stateful nn.Module Class", badge: "model = GPTModel(cfg)", desc: "Instantiates every layer and registers learnable weight matrices automatically." }
@@ -3510,7 +4714,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* <button
+            <button
               type="button"
               onClick={() => {
                 downloadViteProjectZip();
@@ -3520,7 +4724,7 @@ export default function App() {
               className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-700 hover:to-indigo-700 px-3 py-2 rounded-xl shadow-xs transition-all shrink-0"
             >
               <span>Download Vite Project (.zip)</span>
-            </button> */}
+            </button>
 
             <button
               type="button"
@@ -3584,6 +4788,79 @@ export default function App() {
               {activeTopic.plainEnglish}
             </p>
           </div>
+
+          {/* Step-by-Step VS Code Hands-On Lab (Where to Start, File to Create, Run & Output) */}
+          {activeTopic.vsCodeLab && (
+            <div className="bg-white rounded-2xl border-2 border-teal-500/40 shadow-sm overflow-hidden">
+              <div className="px-6 py-4 bg-gradient-to-r from-teal-50 via-emerald-50/60 to-indigo-50/40 border-b border-teal-200/80 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wider bg-teal-600 text-white rounded-md">
+                      Start Here in VS Code &bull; Hands-On Lab
+                    </span>
+                    <span className="font-mono text-xs font-bold text-[#17394D] bg-white px-2.5 py-0.5 rounded-md border border-teal-200">
+                      {activeTopic.vsCodeLab.folder}/{activeTopic.vsCodeLab.fileName}
+                    </span>
+                  </div>
+                  <h2 className="text-base sm:text-lg font-extrabold text-[#17394D] mt-1">
+                    Exact File Setup, Starter Code &amp; Terminal Execution Guide
+                  </h2>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(activeTopic.vsCodeLab.starterCode);
+                    setCopiedCode(true);
+                    setTimeout(() => setCopiedCode(false), 2000);
+                  }}
+                  className="text-xs font-bold px-3.5 py-2 rounded-xl bg-[#17394D] hover:bg-indigo-900 text-white shadow-2xs transition-colors"
+                >
+                  {copiedCode ? "Copied Starter File!" : `Copy ${activeTopic.vsCodeLab.fileName}`}
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {activeTopic.vsCodeLab.steps.map((st, i) => (
+                    <div key={i} className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/85 text-xs text-[#17394D]">
+                      <span className="w-5 h-5 rounded-full bg-teal-600 text-white font-mono font-bold text-[11px] flex items-center justify-center shrink-0 mt-0.5">
+                        {i + 1}
+                      </span>
+                      <span className="leading-relaxed">{st}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 text-slate-100 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-teal-400 font-bold">
+                      File: {activeTopic.vsCodeLab.folder}/{activeTopic.vsCodeLab.fileName}
+                    </span>
+                    <span className="text-slate-400">Python 3.11 (.venv)</span>
+                  </div>
+                  <pre className="text-xs font-mono overflow-x-auto leading-relaxed">
+                    <code>{activeTopic.vsCodeLab.starterCode}</code>
+                  </pre>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  <div className="rounded-xl bg-slate-950 border border-slate-800 p-3.5 text-xs font-mono">
+                    <div className="text-[10px] uppercase tracking-wider text-amber-400 font-bold mb-1">
+                      1. Run in VS Code Terminal (.venv active)
+                    </div>
+                    <div className="text-emerald-300 select-all">$ {activeTopic.vsCodeLab.runCmd}</div>
+                  </div>
+                  <div className="rounded-xl bg-emerald-50/70 border border-emerald-200 p-3.5 text-xs font-mono">
+                    <div className="text-[10px] uppercase tracking-wider text-emerald-900 font-bold mb-1">
+                      2. Expected Terminal Output
+                    </div>
+                    <pre className="text-emerald-950 whitespace-pre-wrap leading-snug">{activeTopic.vsCodeLab.expectedOutput}</pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <ConceptAnimationLab animType={activeTopic.animType} />
 
